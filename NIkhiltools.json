@@ -1,0 +1,327 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+
+	"Description": "CloudFormation template for creating an ec2 instance with Auto Scaling",
+
+	"Parameters": {
+
+		"ComparisonOperator": {
+            "Description":"Comparison Operator for Alarm",
+            "Type":"String",
+            "Default" : "GreaterThanThreshold",
+            "ConstraintDescription" : "when comparing the specified Statistic and Threshold it should be a valid arithmetic operation to use. The specified Statistic value is used as the first operand."
+        },
+        "Statistic": {
+            "Description":"statistic's to apply to the alarm's associated metric",
+            "Type":"String",
+            "Default" : "Average",
+            "ConstraintDescription" : "it must be a valid statistic that can be applied to the alarm's associated metric."
+        },
+
+		"InstanceType": {
+			"Type": "String",
+			"Default": "t2.micro"
+		},
+		  "KeyName": {
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"Default": "ciratraining"
+		}
+
+	},
+
+	"Resources": {
+
+		"VPC": {
+			"Type": "AWS::EC2::VPC",
+			"Properties" : {
+			  "CidrBlock" : "172.10.30.0/24",
+			  "InstanceTenancy" : "default",
+			  "Tags" : [ {"Key" : "nik", "Value" : "cira"}]
+			  }
+		},
+        "mySubnet1": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties" : {
+			  "VpcId" : { "Ref" : "VPC" },
+			  "CidrBlock" : "172.10.30.0/25",
+			  "AvailabilityZone" : "us-east-1a",
+			  "Tags" : [ {"Key" : "nik", "Value" : "cira"}]
+			  }
+		},
+		"mySubnet2": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties" : {
+			  "VpcId" : { "Ref" : "VPC" },
+			  "CidrBlock" : "172.10.30.128/25",
+			  "AvailabilityZone" : "us-east-1a",
+			  "Tags" : [ {"Key" : "nik", "Value" : "cira"}]
+			  }
+		},
+		"myInternetGateway" : {
+            "Type" : "AWS::EC2::InternetGateway",
+            "Properties" : {
+               "Tags" : [ {"Key" : "nik", "Value" : "cira"}]
+                 }
+            },
+						"myDNSRecord" : {
+         "Type" : "AWS::Route53::RecordSet",
+         "Properties" : {
+            "Name" : "trainingcira.com",
+			"HostedZoneId" : "Z3CPSGE0FT6QBI",
+            "ResourceRecords" : [
+               "172.10.30.54"
+            ],
+            "TTL" : "300",
+            "Type" : "A"
+         }
+      },
+		"AttachGateway" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "InternetGatewayId" : { "Ref" : "myInternetGateway" }
+                }
+            },
+
+        "SecurityGroup": {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties": {
+               "GroupDescription" : "Allow Http and https traffic",
+               "VpcId" : { "Ref" : "VPC" },
+               "SecurityGroupIngress" : [{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : 22,
+                    "ToPort" : 22,
+                    "CidrIp" : "0.0.0.0/0"
+                   }],
+			   "SecurityGroupIngress": [{
+                	"IpProtocol" : "tcp",
+                    "FromPort" : 443,
+                    "ToPort" : 443,
+                    "CidrIp" : "10.10.10.0/24"
+                   }]
+                }
+             },
+		"ServerAutoGroup": {
+			"Type": "AWS::AutoScaling::AutoScalingGroup",
+			"DependsOn": "TargetGroup80",
+			"Properties": {
+				"VPCZoneIdentifier": [{
+					"Ref": "mySubnet1",
+					"Ref": "mySubnet2"
+				}],
+				"LaunchConfigurationName": {
+					"Ref": "LaunchConfig"
+				},
+				"MinSize": "1",
+				"MaxSize": "3"
+			}
+		},
+		"S3Bucket" : {
+          "Type" : "AWS::S3::Bucket",
+          "Properties" : {
+            "BucketName" : "nikhilsthree"
+           }
+        },
+		"Alarm": {
+          "Type" : "AWS::CloudWatch::Alarm",
+          "Properties" : {
+              "AlarmDescription" : " EC2  Metric-Alarm",
+              "AlarmActions": [ "arn:aws:sns:us-east-1:276757432750:Nikhil"],
+			  "ComparisonOperator" : { "Ref": "ComparisonOperator" },
+              "EvaluationPeriods": "5",
+              "Statistic": { "Ref": "Statistic" },
+              "MetricName": "my-notification",
+              "Namespace": "my-notification",
+              "Period": "10",
+              "Threshold": "0",
+			  "AlarmName": "html-hits"
+          }
+      },
+		"RootRole": {
+		  "Type": "AWS::IAM::Role",
+		  "Properties": {
+		     "AssumeRolePolicyDocument": {
+			    "Version" : "2012-10-17",
+				"Statement" : [ {
+				  "Effect": "Allow",
+				  "Principal": {
+				     "Service": [ "ec2.amazonaws.com" ]
+					},
+				  "Action": [
+				    "sts:AssumeRole"
+ 					]
+				}]
+			},
+			 "Path": "/",
+			 "Policies": [
+			    {
+				   "PolicyName": "LogRolePolicy",
+				   "PolicyDocument": {
+				       "Version": "2012-10-17",
+					   "Statement": [
+					      {
+						     "Effect": "Allow",
+							 "Action": [
+							     "cloudwatch:PutMetricData",
+                                 "ec2:DescribeVolumes",
+                                 "ec2:DescribeTags",
+                                 "logs:PutLogEvents",
+                                 "logs:DescribeLogStreams",
+                                 "logs:DescribeLogGroups",
+                                 "logs:CreateLogStream",
+                                 "logs:CreateLogGroup"
+						     ],
+						     "Resource": "*"
+
+					     },
+					    {
+						    "Effect": "Allow",
+                            "Action": [
+                              "ssm:GetParameter"
+                            ],
+                            "Resource": "arn:aws:ssm:*:*:parameter/AmazonCloudWatch-*"
+                        }
+
+					]
+					}
+					}]
+
+			}
+		},
+		"myInstanceProfile": {
+		   "Type": "AWS::IAM::InstanceProfile",
+		   "Properties": {
+		      "Path": "/",
+			  "Roles": [{"Ref": "RootRole" }]
+			  }
+			 },
+		"LoadBalancer": {
+              "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+              "Properties": {
+                "Name": "Nik-LoadBalancer",
+                "Scheme": "internet-facing",
+                "Subnets": [{
+					"Ref": "mySubnet1",
+					"Ref": "mySubnet2"
+				}],
+                "Type": "network"
+                }
+            },
+        "TargetGroup80": {
+              "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+              "Properties": {
+                "Name": "nik-LB80",
+                "Port": 80,
+                "Protocol": "TCP",
+                "VpcId": {
+                  "Ref": "VPC"
+                   }
+                }
+            },
+		"CloudWatch": {
+		    "Type": "AWS::IAM::Policy",
+			"Properties": {
+			   "PolicyName": "s3bucket",
+			   "PolicyDocument": {
+			     "Version": "2012-10-17",
+				 "Statement": [
+				    {
+					    "Effect": "Allow",
+                        "Action": [
+                             "s3:GetObject",
+                             "s3:PutObject",
+                             "s3:DeleteObject",
+							 "s3:ListBucket"
+                            ],
+                        "Resource": "arn:aws:s3:::nikhilsthree/*"
+			        }]
+				 },
+			  "Roles": [{
+			       "Ref": "RootRole"
+				}]
+			}
+		},
+		"MySNSTopic": {
+		   "Type" : "AWS::SNS::Topic",
+		   "Properties" : {
+		      "Subscription": [{
+			     "Endpoint" : "nchoudarapu@cirainfotech.com",
+				 "Protocol" : "email"
+				 }],
+			  "TopicName" : "Nik"
+            }
+        },
+
+
+
+		"LaunchConfig": {
+			"Type": "AWS::AutoScaling::LaunchConfiguration",
+			"Metadata": {
+			   "AWS::CloudFormation::Init":{
+			       "config":{
+				      "packages": {
+					    "yum": {
+						   "httpd": [],
+						   "wget": []
+						  }
+						}
+					}
+				}
+			},
+			"Properties": {
+				"KeyName": {
+					"Ref": "KeyName"
+				},
+				"ImageId": "ami-062f7200baf2fa504",
+				"SecurityGroups": [{
+					"Ref": "SecurityGroup"
+				}],
+				"InstanceType": {
+					"Ref": "InstanceType"
+				},
+				"IamInstanceProfile": {
+				    "Ref": "myInstanceProfile"
+				},
+				"AssociatePublicIpAddress": "true",
+				"UserData": {
+                  "Fn::Base64": {
+                     "Fn::Join": [
+                       "",
+                       [
+                         "#!bin/bash\n",
+                         "echo 'entered user data'\n",
+                         "yum install httpd -y \n",
+                         "systemctl start httpd \n",
+                         "cd /var/www/html \n",
+                         "wget  https://raw.githubusercontent.com/Nikhil-Choudarapu/Cira-Amazon/extranet/index.html  \n",
+                         "chmod 755 index.html \n",
+                         "cd /home \n",
+                         "echo 'enter jenkins installation'\n",
+                         "yum update -y \n",
+                         "wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo \n",
+                         "rpm --import  https://jenkins-ci.org/redhat/jenkins-ci.org.key \n",
+                         "yum install jenkins -y \n",
+						 "yum install git -y \n",
+                         "yum install java-1.8.0 -y \n",
+						 "yum install java-1.8.0-openjdk-devel -y \n",
+						 "yum install -y awslogs \n",
+						 "service awslogsd start \n",
+						 "chkconfig awslogsd on \n",
+                         "service jenkins start \n",
+						 "chmod 777 /etc/awslogs/awscli.conf \n",
+						 "chmod 777 /etc/awslogs/awslog.conf \n",
+                         "sleep 30 \n",
+                         "pwd \n",
+                         "ls \n",
+                         "sudo su \n",
+                         "cat /var/lib/jenkins/secrets/initialAdminPassword >> /var/www/html/index.html \n",
+						 "(crontab -l 2>/dev/null; echo \"*/1 * * * * cat /var/www/html/index.html >> /var/log/messages\") | crontab -"
+                        ]
+                      ]
+                   }
+               }
+			}
+		}
+	}
+}
