@@ -1,0 +1,123 @@
+Last login: Wed Mar 18 10:52:17 on ttys002
+
+The default interactive shell is now zsh.
+To update your account to use zsh, please run `chsh -s /bin/zsh`.
+For more details, please visit https://support.apple.com/kb/HT208050.
+Nikhils-MBP:~ nikhilchoudarapu$ aws --version
+aws-cli/1.18.0 Python/2.7.16 Darwin/19.3.0 botocore/1.15.0
+Nikhils-MBP:~ nikhilchoudarapu$ aws ec2 run-instances --image-id ami-07ebfd5b3428b6f4d --count 1 --instance-type t2.micro --region=us-east-1 --key-name ciratraining --security-group-ids sg-0ace05ea46a0a8ebe --subnet-id subnet-0f579358a534dc64f
+Unable to locate credentials. You can configure credentials by running "aws configure".
+Nikhils-MBP:~ nikhilchoudarapu$ aws configure
+AWS Access Key ID [None]: AKIAUA4AHJGXMBPGIKER
+AWS Secret Access Key [None]: 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
+Default region name [None]: us-east-1a
+Default output format [None]: json
+Nikhils-MBP:~ nikhilchoudarapu$ aws ec2 run-instances --image-id ami-07ebfd5b3428b6f4d --count 1 --instance-type t2.micro --region=us-east-1 --key-name ciratraining --security-group-ids sg-0ace05ea46a0a8ebe --subnet-id subnet-0f579358a534dc64f
+{
+    "Instances": [
+        {
+            "Monitoring": {
+                "State": "disabled"
+            }, 
+            "PublicDnsName": "", 
+            "StateReason": {
+                "Message": "pending", 
+                "Code": "pending"
+            }, 
+            "State": {
+                "Code": 0, 
+                "Name": "pending"
+            }, 
+            "EbsOptimized": false, 
+            "LaunchTime": "2020-03-24T02:29:51.000Z", 
+            "PrivateIpAddress": "172.10.10.117", 
+            "ProductCodes": [], 
+            "VpcId": "vpc-0c404dcb027419c97", 
+            "CpuOptions": {
+                "CoreCount": 1, 
+                "ThreadsPerCore": 1
+            }, 
+            "StateTransitionReason": "", 
+            "InstanceId": "i-032e4d69452ae32f3", 
+            "ImageId": "ami-07ebfd5b3428b6f4d", 
+            "PrivateDnsName": "ip-172-10-10-117.ec2.internal", 
+            "KeyName": "ciratraining", 
+            "SecurityGroups": [
+                {
+                    "GroupName": "ciratrainingSG", 
+                    "GroupId": "sg-0ace05ea46a0a8ebe"
+                }
+            ], 
+            "ClientToken": "", 
+            "SubnetId": "subnet-0f579358a534dc64f", 
+            "InstanceType": "t2.micro", 
+            "CapacityReservationSpecification": {
+                "CapacityReservationPreference": "open"
+            }, 
+            "NetworkInterfaces": [
+                {
+                    "Status": "in-use", 
+                    "MacAddress": "0a:f0:01:03:c6:d5", 
+                    "SourceDestCheck": true, 
+                    "VpcId": "vpc-0c404dcb027419c97", 
+                    "Description": "", 
+                    "NetworkInterfaceId": "eni-0441fee54a76f97d6", 
+                    "PrivateIpAddresses": [
+                        {
+                            "PrivateDnsName": "ip-172-10-10-117.ec2.internal", 
+                            "Primary": true, 
+                            "PrivateIpAddress": "172.10.10.117"
+                        }
+                    ], 
+                    "PrivateDnsName": "ip-172-10-10-117.ec2.internal", 
+                    "InterfaceType": "interface", 
+                    "Attachment": {
+                        "Status": "attaching", 
+                        "DeviceIndex": 0, 
+                        "DeleteOnTermination": true, 
+                        "AttachmentId": "eni-attach-00d45571338cd12b1", 
+                        "AttachTime": "2020-03-24T02:29:51.000Z"
+                    }, 
+                    "Groups": [
+                        {
+                            "GroupName": "ciratrainingSG", 
+                            "GroupId": "sg-0ace05ea46a0a8ebe"
+                        }
+                    ], 
+                    "Ipv6Addresses": [], 
+                    "OwnerId": "276757432750", 
+                    "SubnetId": "subnet-0f579358a534dc64f", 
+                    "PrivateIpAddress": "172.10.10.117"
+                }
+            ], 
+            "SourceDestCheck": true, 
+            "Placement": {
+                "Tenancy": "default", 
+                "GroupName": "", 
+                "AvailabilityZone": "us-east-1a"
+            }, 
+            "Hypervisor": "xen", 
+            "BlockDeviceMappings": [], 
+            "Architecture": "x86_64", 
+            "RootDeviceType": "ebs", 
+            "RootDeviceName": "/dev/sda1", 
+            "VirtualizationType": "hvm", 
+            "MetadataOptions": {
+                "State": "pending", 
+                "HttpEndpoint": "enabled", 
+                "HttpTokens": "optional", 
+                "HttpPutResponseHopLimit": 1
+            }, 
+            "AmiLaunchIndex": 0
+        }
+    ], 
+    "ReservationId": "r-06619dce4aab81cfa", 
+    "Groups": [], 
+    "OwnerId": "276757432750"
+}
+Nikhils-MBP:~ nikhilchoudarapu$ aws s3api create-bucket --bucket nikhilchs3 --region us-east-1
+{
+    "Location": "/nikhilchs3"
+}
+Nikhils-MBP:~ nikhilchoudarapu$ aws logs create-log-group --region us-east-1 --log-group-name nikhilchlogs
+Nikhils-MBP:~ nikhilchoudarapu$ 
